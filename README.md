@@ -1,4 +1,4 @@
 # DepremSensoru
 // Deprem uyarı sistemi
-// based on Seeeduino XIAO
+// based on Esp8266
 // Mpu6050
