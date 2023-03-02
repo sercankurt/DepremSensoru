@@ -1,91 +1,136 @@
-#include <ESP8266WiFi.h>  //Esp8266-01 Kütüphanesi
-#include <TinyMPU6050.h>  //MPU gyrp sensörü küütüpanesi
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+#include <ESP8266HTTPClient.h>
+#include <TinyMPU6050.h>
 
-const char* ssid = "TA1AFS";   //esp modem bağlantısı
-const char* password = "?sngMuDvk@#";  //esp modem bağlantısı
+WiFiClient wifiClient;
 
-float pos_offset = 0.90;  // MPU hassasiyet
-float neg_offset = -0.90; // MPU hassasiyet
+const String ssid = "XX--SSID--XX";
+const String password = "XX--PASSWORD--XX";
+
+const String key = "XX-key-XX"; 
+const String event = "XX-event-XX"; 
+
+int sda = 2;
+int scl = 0;
+int bz  = 3;
+ 
+int acil_durum = 0;
+
+float pos_offset = 1.50;
+float neg_offset = -1.50;
 long angle_x, angle_y, angle_z, offset_x, offset_y, offset_z;
-MPU6050 mpu (Wire);  // MPU'yu I2C olarak cihaza tanıtmak için
+MPU6050 mpu (Wire);
 
+void url_istek() {
+   if (WiFi.status() == WL_CONNECTED) {
+   HTTPClient http;
+   String sayfa = "http://maker.ifttt.com/trigger/" + event + "/with/key/" + key;
+   delay(10);
+   http.begin(wifiClient, sayfa); delay(10);
+   int httpCode = http.GET();     delay(10);
+   Serial.println(httpCode);
+   if (httpCode > 0) { String payload = http.getString();   
+                       Serial.println(payload); }
+   http.end();
+   } 
+}
 
 void setup() {
-
-  Wire.begin(0, 2);  // I2C pinleri tanıtıldı. 0=SDA, 2=SCL
-
-  // Initialization
+  Wire.begin(sda,scl);
   mpu.Initialize();
+  Serial.begin(115200);
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect();
+  delay(100);
+  pinMode(bz, OUTPUT);   digitalWrite(bz, LOW);
+  
+  WiFi.begin(ssid, password);
+  
+  while (WiFi.status() != WL_CONNECTED) {
+  Serial.print("."); }
+    
+  Serial.println("");
+  Serial.println("WiFi connected");
 
-  // Calibration
-  Serial.begin(9600);
-  Serial.println("=====================================");
-  Serial.println("Starting calibration...");
+  digitalWrite(bz, HIGH);
+  delay(75);
+  digitalWrite(bz, LOW);
+  delay(35);
+  digitalWrite(bz, HIGH);
+  delay(225);
+  digitalWrite(bz, LOW);
+  delay(35);
+  digitalWrite(bz, HIGH);
+  delay(225);
+  digitalWrite(bz, LOW);
+
+  Serial.println("IP address: ");
+  IPAddress ip = WiFi.localIP();
+  Serial.println(ip);
+
+  Serial.println("Starting MPU calibration...");
   mpu.Calibrate();
   Serial.println("Calibration complete!");
 
-    for(int i=0; i<200; i++){
-   mpu.Execute();
-  offset_x = mpu.GetAngX();
-  offset_y = mpu.GetAngY();
-  offset_z = mpu.GetAngZ();
-  }
+  for (int i = 0; i < 100; i++) {
+    mpu.Execute();
+    offset_x = mpu.GetAngX();
+    offset_y = mpu.GetAngY();
+    offset_z = mpu.GetAngZ(); }
   
-  Serial.println("Offsets:");
-  Serial.print("GyroX Offset = ");
-  Serial.println(mpu.GetGyroXOffset());
-  Serial.print("GyroY Offset = ");
-  Serial.println(mpu.GetGyroYOffset());
-  Serial.print("GyroZ Offset = ");
-  Serial.println(mpu.GetGyroZOffset());
-
-  pinMode(3, OUTPUT);  //Tx 01 pini çıkış pini olarak tanıtıldı
-  digitalWrite(3, LOW); //1.pin lojik 0'a çekildi
-
-  
-  digitalWrite(3, HIGH); //1.pin lojik 0'a çekildiz
-  delay(1000);
-  digitalWrite(3, LOW); //1.pin lojik 0'a çekildiz
-  delay(1000);
-  digitalWrite(3, HIGH); //1.pin lojik 0'a çekildiz
-  delay(1000);
-  digitalWrite(3, LOW); //1.pin lojik 0'a çekildiz
-  delay(1000);
-
+  digitalWrite(bz, HIGH);
+  delay(225);
+  digitalWrite(bz, LOW);
+  delay(35);
+  digitalWrite(bz, HIGH);
+  delay(75);
+  digitalWrite(bz, LOW);
+  delay(35);
+  digitalWrite(bz, HIGH);
+  delay(225);
+  digitalWrite(bz, LOW);
+  delay(35);
+  digitalWrite(bz, HIGH);
+  delay(75);
+  digitalWrite(bz, LOW);
+  delay(35);
 }
 
 void loop() {
-
- for(int i=0; i<10; i++){
-  mpu.Execute();
-  angle_x = mpu.GetAngX();
-  angle_y = mpu.GetAngY();
-  angle_z = mpu.GetAngZ(); }
-
-  Serial.print("AngX = ");
-  Serial.print(mpu.GetAngX());
-  Serial.print("  /  AngY = ");
-  Serial.print(mpu.GetAngY());
-  Serial.print("  /  AngZ = ");
-  Serial.println(mpu.GetAngZ());
-
+  if(acil_durum==1) { 
+   url_istek();
+   delay(100);
+   acil_durum=2; 
+   }
+    
+  if( acil_durum>25) {
+    acil_durum=0;
+    }
+  
+  for (int i = 0; i < 10; i++) {
+    mpu.Execute();
+    angle_x = mpu.GetAngX();
+    angle_y = mpu.GetAngY();
+    angle_z = mpu.GetAngZ(); }
+    
   if ( pos_offset < angle_x - offset_x ||
        neg_offset > angle_x - offset_x ||
        pos_offset < angle_y - offset_y ||
        neg_offset > angle_y - offset_y ||
        pos_offset < angle_z - offset_z ||
        neg_offset > angle_z - offset_z) {
-
-  
-      digitalWrite(3, HIGH);
-      delay(50);
-      digitalWrite(3, LOW);
-      delay(50);
     
+    acil_durum++;
+
+    digitalWrite(bz, HIGH);
+    delay(50);
+    digitalWrite(bz, LOW);
+    delay(50);
 
     mpu.Execute();
     offset_x = mpu.GetAngX();
     offset_y = mpu.GetAngY();
-    offset_z = mpu.GetAngZ();
-  }
+    offset_z = mpu.GetAngZ(); 
+    }
 }
