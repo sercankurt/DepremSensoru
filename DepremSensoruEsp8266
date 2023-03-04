@@ -5,11 +5,11 @@
 
 WiFiClient wifiClient;
 
-const String ssid = "ronaldinho";
-const String password = "023698547GE?.";
+const String ssid = "******";
+const String password = "******?.";
 
-const String key = "lB0lSfBOh0elfpzDkOA3URYF1sfxmpzP5bkzJxUyJLA"; 
-const String event = "deprem";
+const String key = "******"; 
+const String event = "******";
 
 int sda = 2;
 int scl = 0;
