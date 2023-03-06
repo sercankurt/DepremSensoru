@@ -5,17 +5,18 @@
 
 WiFiClient wifiClient;
 
-const String ssid = "******";
-const String password = "******?.";
+const String ssid = "TA1AFS";
+const String password = "?sngMuDvk@#";
 
-const String key = "******"; 
-const String event = "******";
+const String key = "lB0lSfBOh0elfpzDkOA3URYF1sfxmpzP5bkzJxUyJLA";
+const String event = "deprem";
 
 int sda = 2;
 int scl = 0;
 int bz  = 3;
 
-int acil_durum = 0;
+bool iftttSent = false; // ifttt isteği gönderildi mi?
+unsigned long iftttTime = 0; // son ifttt isteği zamanı
 
 const float pos_offset = 1.35;
 const float neg_offset = -1.35;
@@ -23,7 +24,7 @@ long angle_x, angle_y, offset_x, offset_y;
 MPU6050 mpu (Wire);
 
 void url_istek() {
-  if (WiFi.status() == WL_CONNECTED) {
+  if (!iftttSent && WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     String sayfa = "http://maker.ifttt.com/trigger/" + event + "/with/key/" + key;
     http.begin(wifiClient, sayfa);
@@ -32,6 +33,8 @@ void url_istek() {
     if (httpCode > 0) {
       String payload = http.getString();
       Serial.println(payload);
+      iftttSent = true;
+      iftttTime = millis();
     }
     http.end();
   }
@@ -101,7 +104,7 @@ void setup() {
 
 void loop() {
 
-  for (int i = 0; i < 100; i++) {
+  for (int i = 0; i < 50; i++) {
     mpu.Execute();
     angle_x = mpu.GetAngX();
     angle_y = mpu.GetAngY();
@@ -112,7 +115,7 @@ void loop() {
        pos_offset < angle_y - offset_y ||
        neg_offset > angle_y - offset_y ) {
 
-    acil_durum++;
+    url_istek();
 
     digitalWrite(bz, HIGH);
     delay(50);
@@ -123,13 +126,9 @@ void loop() {
     offset_x = mpu.GetAngX();
     offset_y = mpu.GetAngY();
   }
-  
-  if (acil_durum == 1) {
-    url_istek();
-    acil_durum = 2;
+
+  if (iftttSent && millis() - iftttTime > 10000) {
+    iftttSent = false;
   }
 
-  if ( acil_durum > 15) {
-    acil_durum = 0;
-  }
 }
