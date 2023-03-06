@@ -17,9 +17,9 @@ int bz  = 3;
 
 int acil_durum = 0;
 
-const float pos_offset = 1.40;
-const float neg_offset = -1.40;
-long angle_x, angle_y, angle_z, offset_x, offset_y, offset_z;
+const float pos_offset = 1.35;
+const float neg_offset = -1.35;
+long angle_x, angle_y, offset_x, offset_y;
 MPU6050 mpu (Wire);
 
 void url_istek() {
@@ -101,7 +101,7 @@ void setup() {
 
 void loop() {
 
-  for (int i = 0; i < 150; i++) {
+  for (int i = 0; i < 100; i++) {
     mpu.Execute();
     angle_x = mpu.GetAngX();
     angle_y = mpu.GetAngY();
