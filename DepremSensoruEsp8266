@@ -18,8 +18,8 @@ int bz  = 3;
 bool iftttSent = false; // ifttt isteği gönderildi mi?
 unsigned long iftttTime = 0; // son ifttt isteği zamanı
 
-const float pos_offset = 1.35;
-const float neg_offset = -1.35;
+const float pos_offset = 1.40;
+const float neg_offset = -1.40;
 long angle_x, angle_y, offset_x, offset_y;
 MPU6050 mpu (Wire);
 
@@ -104,7 +104,7 @@ void setup() {
 
 void loop() {
 
-  for (int i = 0; i < 50; i++) {
+  for (int i = 0; i < 200; i++) {
     mpu.Execute();
     angle_x = mpu.GetAngX();
     angle_y = mpu.GetAngY();
@@ -117,10 +117,10 @@ void loop() {
 
     url_istek();
 
-    digitalWrite(bz, HIGH);
-    delay(50);
-    digitalWrite(bz, LOW);
-    delay(50);
+    digitalWrite(bz, HIGH); delay(75);
+    digitalWrite(bz, LOW); delay(25);
+    digitalWrite(bz, HIGH); delay(75);
+    digitalWrite(bz, LOW); delay(25);
 
     mpu.Execute();
     offset_x = mpu.GetAngX();
